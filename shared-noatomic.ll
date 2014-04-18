@@ -13,7 +13,7 @@ define void @kernel(i32 addrspace(1)* %nums,
 entry:
 
   ; What is my ID?
-  %id = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
+  %id = tail call i32 @llvm.nvvm.read.ptx.sreg.tid.x() readnone nounwind
 
   %ptr_counts = getelementptr [16 x i32] addrspace(3)* @counts, i32 0, i32 %id
   store i32 0, i32 addrspace(3)* %ptr_counts, align 4
@@ -22,11 +22,9 @@ entry:
   %nums_val = load i32 addrspace(1)* %ptr_nums, align 4
   %ptr_my_count = getelementptr [16 x i32] addrspace(3)* @counts, i32 0, i32 %nums_val
 
-  atomicrmw add i32 addrspace(3)* %ptr_my_count, i32 1 acquire
-
-  ;%my_count_val = load i32 addrspace(3)* %ptr_my_count, align 4
-  ;%newval = add i32 %my_count_val, 1
-  ;store i32 %newval, i32 addrspace(3)* %ptr_my_count, align 4
+  %my_count_val = load i32 addrspace(3)* %ptr_my_count, align 4
+  %newval = add i32 %my_count_val, 1
+  store i32 %newval, i32 addrspace(3)* %ptr_my_count, align 4
 
   ;call i32 @llvm.ptx.atom.add.s.32( i32 addrspace(3)* %ptr_my_count, i32 2 )
 
