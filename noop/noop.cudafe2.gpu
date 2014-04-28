@@ -1,0 +1,16 @@
+# 212 "/usr/lib/gcc/x86_64-linux-gnu/4.6/include/stddef.h" 3
+typedef unsigned long size_t;
+#include "crt/device_runtime.h"
+# 1 "noop.cu"
+__global__ __var_used__ extern void _Z6kernelv(void);
+#include "common_functions.h"
+# 1 "noop.cu"
+__global__ __var_used__ void _Z6kernelv(void){
+# 1 "noop.cu"
+{
+# 1 "noop.cu"
+{
+# 2 "noop.cu"
+} 
+# 2 "noop.cu"
+}}

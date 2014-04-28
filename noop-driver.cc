@@ -7,7 +7,6 @@
 
 /// main - Program entry point
 int main(int argc, char **argv) {
-  printf("size: %d\n", sizeof(int));
   CUdevice    device;
   CUmodule    cudaModule;
   CUcontext   context;
@@ -32,7 +31,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::ifstream t("shared.ptx");
+  std::ifstream t("noop.ptx");
   if (!t.is_open()) {
     std::cerr << "kernel.ptx not found\n";
     return 1;
@@ -49,22 +48,6 @@ int main(int argc, char **argv) {
   // Get kernel function
   checkCudaErrors(cuModuleGetFunction(&function, cudaModule, "kernel"));
 
-  // Device data
-  CUdeviceptr devBufferNums;
-  CUdeviceptr devBufferCounts;
-
-  checkCudaErrors(cuMemAlloc(&devBufferNums, sizeof(int)*16));
-  checkCudaErrors(cuMemAlloc(&devBufferCounts, sizeof(int)*16));
-
-  int* hostNums = new int[16];
-  int* hostCounts = new int[16];
-
-  // Populate input
-  for (unsigned i = 0; i < 16; ++i) {
-    hostNums[i] = i/2;
-  }
-
-  checkCudaErrors(cuMemcpyHtoD(devBufferNums, &hostNums[0], sizeof(int)*16));
 
   unsigned blockSizeX = 16;
   unsigned blockSizeY = 1;
@@ -74,7 +57,7 @@ int main(int argc, char **argv) {
   unsigned gridSizeZ  = 1;
 
   // Kernel parameters
-  void *KernelParams[] = { &devBufferNums, &devBufferCounts};
+  void *KernelParams[] = {};
 
   std::cout << "Launching kernel\n";
 
@@ -84,22 +67,8 @@ int main(int argc, char **argv) {
                                  0, NULL, KernelParams, NULL));
 
   // Retrieve device data
-  checkCudaErrors(cuMemcpyDtoH(&hostCounts[0], devBufferCounts, sizeof(int)*16));
+  checkCudaErrors(cuCtxSynchronize());
 
-
-  std::cout << "Results:\n";
-  for (unsigned i = 0; i != 16; ++i) {
-    std::cout << i << " = " << hostCounts[i] << "\n";
-  }
-
-
-  // Clean up after ourselves
-  delete [] hostNums;
-  delete [] hostCounts;
-
-  // Clean-up
-  checkCudaErrors(cuMemFree(devBufferNums));
-  checkCudaErrors(cuMemFree(devBufferCounts));
   checkCudaErrors(cuModuleUnload(cudaModule));
   checkCudaErrors(cuCtxDestroy(context));
 
