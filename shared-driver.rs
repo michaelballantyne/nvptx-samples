@@ -91,11 +91,10 @@ fn main(){
         kernelParams.push(&counts_dev as *CUdeviceptr);
 
         checkCudaErrors!(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
-				       blockSizeX, blockSizeY, blockSizeZ,
-                   0, ptr::null(), kernelParams.as_ptr(), ptr::null()));
+           blockSizeX, blockSizeY, blockSizeZ,
+            0, ptr::null(), kernelParams.as_ptr(), ptr::null()));
 
         checkCudaErrors!(cuCtxSynchronize());
-
 
         let mut hostcounts: Vec<i32> = Vec::with_capacity(16);
         checkCudaErrors!(cuMemcpyDtoH(hostcounts.as_mut_ptr() as *libc::c_void, counts_dev, (std::mem::size_of::<i32>() * 16) as u64));
