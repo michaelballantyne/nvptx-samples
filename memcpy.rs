@@ -38,8 +38,14 @@ fn main(){
 
 
         let mut nums_dev = 0 as CUdeviceptr;
+        let mut counts_dev = 0 as CUdeviceptr;
         checkCudaErrors(cuMemAlloc(&mut nums_dev, (std::mem::size_of::<i32>() * 16) as u32));
+        checkCudaErrors(cuMemAlloc(&mut counts_dev, (std::mem::size_of::<i32>() * 16) as u32));
         println!("{}", 9);
+
+        println!("sizeof: {}", std::mem::size_of::<i32>());
+        println!("devptr: {}", nums_dev);
+        println!("devptr: {}", counts_dev);
 
         let hostNums = Vec::from_fn(16, |i| i as i32);
 	println!("{}", hostNums);
@@ -47,11 +53,11 @@ fn main(){
         checkCudaErrors(cuMemcpyHtoD(nums_dev, hostNums.as_ptr() as *libc::c_void, (std::mem::size_of::<i32>() * 16) as u64));
 
         let mut hostnumsback: Vec<i32> = Vec::with_capacity(16);
-	hostnumsback.set_len(16);
-	println!("{}", hostnumsback);
+        hostnumsback.set_len(16);
+        println!("{}", hostnumsback);
         checkCudaErrors(cuMemcpyDtoH(hostnumsback.as_mut_ptr() as *libc::c_void, nums_dev, (std::mem::size_of::<i32>() * 16) as u64));
 
-	println!("{}", hostnumsback);
+        println!("{}", hostnumsback);
 
     }
 }
