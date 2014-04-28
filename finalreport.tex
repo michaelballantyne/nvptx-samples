@@ -1,0 +1,79 @@
+\documentclass[11pt, final,conference,twocolumn,nofonttune]{IEEEtran}
+\usepackage[letterpaper,margin=1in]{geometry}
+
+\usepackage{siunitx}
+\usepackage{url}
+\usepackage[breaklinks]{hyperref}
+
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage[sc]{mathpazo}
+\usepackage{listings}
+
+\title{Project Proposal: Shared Memory Support for GPU Kernels in Rust}
+\author{
+Michael Ballantyne
+\and
+Shravanthi Manohar
+\and
+Prajakta Mane
+}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+We propose to extend the work of Eric Holk et al. providing support for GPU kernel programming in Rust \cite{rustgpu} enough to implement a GPU radix sort. This will require implementation of support for shared memory, atomic operations, and other GPU intrinsic functions. Rust is a systems level multi-paradigm programming language developed by Mozilla Research \cite{rust}. It is compiled through the LLVM compiler infrastructure \cite{llvm}, so the LLVM NVPTX backend can be used to generate PTX virtual machine assembly for Nvidia GPUs \cite{nvptx}.
+
+\section{Rust for GPU Programming}
+Rust is a compelling language for GPU kernel implementation. It is fully compiled systems level language and garbage collection is optional, so compiled Rust code doesn't require runtime support. It also has a simple foreign function interface to call code written in C, so integration with GPU driver APIs is easy. At the same time, it supports many features of higher level, functional languages like closures, higher order functions, and type classes. The Rust compiler is often able to compile code using these higher order abstractions into tight loops much like a C compiler would generate.
+
+Eric Holk et al. recognized the potential for GPU programming in Rust and published an open source proof of concept including modifications to the Rust compiler, OpenCL bindings, and a set of higher level abstractions built in Rust for interacting with the GPU. Figure~\ref{gpucode} shows an example of a GPU kernel written in Rust based on this work.
+
+Another important feature of Rust is safer memory access. Rust supports owned and borrowed references and the compiler statically verifies they are used correctly. A function that receives a borrowed pointer, for example, can't send it off to a task running concurrently. GPU kernels could benefit from this type of compile-time safety checking.
+
+\begin{figure}[!htb]
+\begin{lstlisting}
+
+#[kernel]
+fn add_vectors( N: uint,
+++A: ÷[float],
+++B: ÷[float],
+++C: ÷[mut float])
+{
+    do gpu::range(0, N) |i| {
+        C[i] = A[i] + B[i]
+    };
+}
+\end{lstlisting}
+\caption{Higher order abstraction on the GPU}
+\label{gpucode}
+\end{figure}
+
+\section{Supporting Shared Memory}
+The previous work on Rust GPU support uses the NVPTX LLVM backend to compile the LLVM internal representation produced by the Rust compiler. To shared memory, we need to modify the Rust compiler to produce code using the LLVM  address space that NVPTX uses to represent shared memory. It may also be necessary to emit address space conversion instructions.
+
+A generic type could provide the API for shared memory use. Programmers would instantiate the type with an object they want to be stored in shared memory and receive an object they can use like a pointer. While the compiler will require modification to generate the correct LLVM address space, we can likely avoid needing to change the type system.
+
+\section{GPU Intrinsics}
+Code using shared memory typically also requires functions like syncthreads and atomic operations to work with shared memory safely. These aren't yet supported by the proof of concept implementation, so we'll need to add them. These operations are provided as intrinsics by NVPTX, but we need to provide compiler and library support to allow Rust programmers to call them.
+
+\section{Safe Memory Access}
+One of the goals of Rust is to provide safer memory access by region analysis of pointers. Ideally GPU support for Rust would provide a comparable level of safety. We're not sure whether we'll get to this as the previously mentioned parts of our project are substantial, but we'd like to implement support for static checking of memory regions declared to be independent. Our analysis would be based on the ideas from Baur et al. in their paper on Legion \cite{legion}.
+
+Rust supports vector slices, which are array-like object that serve as windows into other arrays. Vector slices could provide a good interface by which to declare disjoint regions of memory to be accessed by each GPU thread.
+
+
+\begin{thebibliography}{3}
+\bibitem{rust} "The Rust programming language", Available: \url{http://www.rust-lang.org/}
+
+\bibitem{legion} M. Baur, S. Treichler, E. Slaughter, A. Aiken, "Legion: expressing locality and independence with logical regions", in \emph{Proceedings of the International Conference on High Performance Computing, Networking, Storage and Analysis}, Salt Lake City, UT, 2012, Article No. 66. Available: \url{http://legion.stanford.edu/pdfs/sc2012.pdf}
+
+\bibitem{rustgpu} E. Holk,	M. Pathirage, A. Chauhan, A. Lumsdaine, N. D. Matsakis, "GPU programming in Rust: implementing high level abstractions in a systems level language", in Proceedings of the Parallel and Distributed Processing Symposium Workshops, 2013, pp. 315 - 324. Available \url{http://www.cs.indiana.edu/~eholk/papers/hips2013.pdf}
+
+\bibitem{llvm} "The LLVM Compiler Infrastructure", Available: \url{http://llvm.org/}
+
+\bibitem{nvptx} "User Guide for NVPTX Back-end", Available: \url{http://llvm.org/docs/NVPTXUsage.html}
+
+\end{thebibliography}
+
+\end{document}
