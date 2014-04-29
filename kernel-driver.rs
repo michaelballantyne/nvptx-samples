@@ -61,8 +61,8 @@ fn main(){
         checkCudaErrors!(cuDeviceGet(&device, 0));
         checkCudaErrors!(cuCtxCreate(&mut *context, 0,  device));
 
-        let ptxdata = File::open(&Path::new("shared-cast.ptx")).read_to_end().unwrap();
-        let kernel = "kernel";
+        let ptxdata = File::open(&Path::new("kernel.ptx")).read_to_end().unwrap();
+        let kernel = "_ZN10add_vector20he095895af22b9857laa4v0.0E";
 
         let mut function = ptr::null();
         let mut cudamodule = ptr::null();
